@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Canlı Konum Takibi</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    #map { height: 100vh; width: 100%; }
+    #status { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: white; padding: 10px; z-index: 999; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.3);}
+  </style>
+</head>
+<body>
+
+<div id="status">Konum bekleniyor...</div>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+let map = L.map('map').setView([0, 0], 2); // İlk açıldığında dünya haritası
+let marker = null;
+let path = []; // Konum yolunu tutmak için bir dizi
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+}).addTo(map);
+
+if ("geolocation" in navigator) {
+  navigator.geolocation.watchPosition(
+    function(position) {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+
+      // Konum verisi gelirse:
+      if (!marker) {
+        marker = L.marker([lat, lng]).addTo(map)
+                 .bindPopup("Şu anki Konumunuz").openPopup();
+      } else {
+        marker.setLatLng([lat, lng]);
+      }
+
+      // Yolu güncelle
+      path.push([lat, lng]);
+
+      // Yolu haritaya çiz
+      L.polyline(path, { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);
+
+      map.setView([lat, lng], 16);
+      document.getElementById('status').innerText = "Konum Alındı!";
+    },
+    function(error) {
+      document.getElementById('status').innerText = "Konum alınamıyor: " + error.message;
+    },
+    {
+      enableHighAccuracy: true,
+      maximumAge: 3000,
+      timeout: 10000
+    }
+  );
+} else {
+  document.getElementById('status').innerText = "Tarayıcınız konum servisini desteklemiyor.";
+}
+</script>
+
+</body>
+</html>
